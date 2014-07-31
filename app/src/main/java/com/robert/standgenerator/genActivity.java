@@ -20,7 +20,6 @@ import com.robert.myapplication.R;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,18 +35,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class MyActivity extends ActionBarActivity implements AsyncResponse {
+public class genActivity extends ActionBarActivity implements AsyncResponse {
 
     private static final Pattern TITLE_TAG =
             Pattern.compile("\\<title>(.*)\\</title>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     String name;
-    String newName;
-    String power;
+    String newName;     //newName and newPower store string until ready to be used shown.
+    String power;       //Avoids posted result and shown result mismatch
     String newPower;
     String password;
     String user;
-    String url;
-    String redditStand;
+    String redditStand;     //Stand data formatted for reddit
     TextView powerText;
     TextView nameText;
     TextView stats;
@@ -64,7 +62,7 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         powerText = (TextView) findViewById(R.id.textView2);
         stats = (TextView) findViewById(R.id.textView3);
         setEditText();
-        generate();
+        generate();     //Generates power/stats immediately to prevent unresponsive button
     }
 
     public void setEditText() {
@@ -73,7 +71,7 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
                 // If the event is a key-down event on the "enter" button
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    generate();
+                    generate();     //Generates when text field's "Done" button is entered. Avoids first gen not showing a name immediately.
                     return true;
                 }
                 return false;
@@ -86,17 +84,21 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         redditStand = form;
     }
 
+    //Opens sign-in fragment
     public void onRedditClick(View view) {
             RedditSignInDialogFragment signIn = new RedditSignInDialogFragment();
             signIn.show(getFragmentManager(), "signin");
     }
 
+    //Posts submission to most recent "Stand Saturday" thread on reddit if valid
+    //Otherwise displays a warning
     public void onPostClick(View view){
         if(name == null || power == null || stats ==null) {
             Toast.makeText(this, "Generate a Stand first", Toast.LENGTH_SHORT).show();
         } else if(user==null || password == null || user == "" || password == ""){
             Toast.makeText(this,"Sign in", Toast.LENGTH_SHORT).show();
         } else {
+            Toast.makeText(this,"Posting",Toast.LENGTH_SHORT).show();
             getRedditFormatStand();
             RedditPost post = new RedditPost();
             post.delegate=this;
@@ -104,13 +106,16 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         }
     }
 
+    //Creates and executes new TitleFetcher
     public void generate() {
         fetcher = new TitleFetcher();
         fetcher.delegate = this;
         fetcher.execute(field.getText().toString());
     }
 
+    //Displays current stand information
     public void onNameClick(View view) {
+        //Updates power and name
         power=newPower;
         name=newName;
         powerText.setText("Stand Ability: " + power);
@@ -122,9 +127,11 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
             Button button = (Button) findViewById(R.id.postButton);
             button.setText(R.string.wryy);
         }
+        //gets another newPower and newName
         generate();
     }
 
+    //Mirror easter egg from generator website
     public boolean dio(){
         if(field.getText().toString().toLowerCase().equals("dio")){
             return true;
@@ -132,6 +139,7 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         return false;
     }
 
+    //returns random stats A-E, formatted for a single TextView
     public String getStats() {
         String stats = "";
         Random rand = new Random();
@@ -161,14 +169,17 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         return stats;
     }
 
+    //Sets output from TitleFetcher to newPower and newName
     @Override
     public void processFinish(String[] output) {
         newPower = output[0].replace("/Gallery","");
         newName = output[1];
     }
 
+    //Sets output from RedditPost to TextView urlText. Displays after posting has finished.
     @Override
     public void setUrl(String url) {
+        Toast.makeText(this,"Posting complete",Toast.LENGTH_SHORT).show();
         TextView urlText = (TextView) findViewById(R.id.urlText);
         urlText.setClickable(true);
         urlText.setMovementMethod(LinkMovementMethod.getInstance());
@@ -176,7 +187,9 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         urlText.setText(Html.fromHtml(text));
     }
 
-
+    //I/O thread for getting Stand name,power
+    //generic String, Album/Artist name
+    //generic String[], {stand power, stand name} to be returned
     class TitleFetcher extends AsyncTask<String, Void, String[]> {
 
         public AsyncResponse delegate;
@@ -206,6 +219,8 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
             delegate.processFinish(result);
         }
 
+
+        //Gets random page from powerlisting wiki and extracts the title
         public String getPower() throws IOException {
             String title;
             URL url = new URL("http://www.powerlisting.wikia.com/wiki/Special:Random");
@@ -241,6 +256,9 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
             return null;
         }
 
+
+        //gets itunes search results and returns random track
+        //returns "[Album Not Found]" if search results are empty
         public String getName(String albumName) throws IOException, JSONException {
             String partialUrl = "https://itunes.apple.com/search?term=";
             albumName.replaceAll("[\\s\\<>]+", " ");
@@ -314,6 +332,9 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
         }
     }
 
+    //I/O stream for posting to reddit
+    //generic String user/pass combination
+    //generic String url of stand saturday thread
     class RedditPost extends AsyncTask<String, Void, String>{
 
         AsyncResponse delegate;
@@ -345,6 +366,7 @@ public class MyActivity extends ActionBarActivity implements AsyncResponse {
             delegate.setUrl(url);
         }
 
+        //returns reddit fullName for creating a Submission object , url of thread to be returned onPostExecute
         public String[] getStandSaturday() throws IOException, JSONException {
             String arr[] = new String[2];
             String str = "";

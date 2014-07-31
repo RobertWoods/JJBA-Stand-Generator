@@ -27,7 +27,7 @@ public class RedditSignInDialogFragment extends DialogFragment {
         View view = inflater.inflate(R.layout.dialog_signin,null);
         final EditText user = (EditText) view.findViewById(R.id.username);
         final EditText pass = (EditText) view.findViewById(R.id.password);
-        final MyActivity activity = (MyActivity) getActivity();
+        final genActivity activity = (genActivity) getActivity();
 
         builder.setView(view)
                 .setPositiveButton(R.string.signin, new DialogInterface.OnClickListener() {
