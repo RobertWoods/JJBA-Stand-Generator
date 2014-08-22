@@ -1,7 +1,7 @@
 JJBA-Stand-Generator
 ====================
 
-Generates a random Stand from Jojo's Bizarre Adventure 
+Generates a random ["Stand"](http://jojo.wikia.com/wiki/Stand) from Jojo's Bizarre Adventure 
 
 
 Gets a random song using the itunes search API and input from the user
