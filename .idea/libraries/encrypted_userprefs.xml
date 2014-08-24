@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="encrypted-userprefs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/encrypted-userprefs.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -9,7 +9,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +51,8 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
     TextView nameText;
     TextView stats;
     EditText field;
+    Button button;
+    ProgressBar loadingBar;
     TitleFetcher fetcher;
 
     @Override
@@ -61,8 +64,36 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
         nameText = (TextView) findViewById(R.id.textView1);
         powerText = (TextView) findViewById(R.id.textView2);
         stats = (TextView) findViewById(R.id.textView3);
+        loadingBar = (ProgressBar) findViewById(R.id.loadingBar);
+        button = (Button) findViewById(R.id.genButton);
         setEditText();
-        generate();     //Generates power/stats immediately to prevent unresponsive button
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putString("power",powerText.getText().toString());
+        savedInstanceState.putString("name",nameText.getText().toString());
+        savedInstanceState.putString("newPower",newPower);
+        savedInstanceState.putString("newName",newName);
+        savedInstanceState.putString("stats",stats.getText().toString());
+        savedInstanceState.putString("field",field.getText().toString());
+        savedInstanceState.putInt("visibility",button.getVisibility());
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState){
+        super.onRestoreInstanceState(savedInstanceState);
+        power = savedInstanceState.getString("power");
+        powerText.setText(power);
+        name = savedInstanceState.getString("name");
+        nameText.setText(name);
+        stats.setText(savedInstanceState.getString("stats"));
+        field.setText(savedInstanceState.getString("field"));
+        newName=savedInstanceState.getString("newPower");
+        newPower=savedInstanceState.getString("newName");
+        if(savedInstanceState.getInt("visibility")==View.VISIBLE)
+            button.setVisibility(View.VISIBLE);
     }
 
     public void setEditText() {
@@ -98,6 +129,7 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
         } else if(user==null || password == null || user == "" || password == ""){
             Toast.makeText(this,"Sign in", Toast.LENGTH_SHORT).show();
         } else {
+            loadingBar.setVisibility(View.VISIBLE);
             Toast.makeText(this,"Posting",Toast.LENGTH_SHORT).show();
             getRedditFormatStand();
             RedditPost post = new RedditPost();
@@ -111,6 +143,7 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
         fetcher = new TitleFetcher();
         fetcher.delegate = this;
         fetcher.execute(field.getText().toString());
+        loadingBar.setVisibility(View.VISIBLE);
     }
 
     //Displays current stand information
@@ -122,8 +155,8 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
         nameText.setText("Stand Name: " + name);
         stats.setText(getStats());
         if(dio()){
-            ImageView img = (ImageView) findViewById(R.id.imageView);
-            img.setImageResource(R.drawable.dio_portrait);
+            ((LinearLayout) findViewById(R.id.layout)).setBackgroundResource(R.drawable.backgrounddio);
+            ((LinearLayout) findViewById(R.id.layout)).setPadding(32,16,32,16);
             Button button = (Button) findViewById(R.id.postButton);
             button.setText(R.string.wryy);
         }
@@ -172,13 +205,24 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
     //Sets output from TitleFetcher to newPower and newName
     @Override
     public void processFinish(String[] output) {
+        loadingBar.setVisibility(View.INVISIBLE);
         newPower = output[0].replace("/Gallery","");
         newName = output[1];
+        if(newName!="[Album Not Found]") {
+            Button genButton = (Button) findViewById(R.id.genButton);
+            genButton.setVisibility(View.VISIBLE);
+        } else
+            Toast.makeText(this,"Song not found",Toast.LENGTH_SHORT).show();
     }
 
     //Sets output from RedditPost to TextView urlText. Displays after posting has finished.
     @Override
     public void setUrl(String url) {
+        loadingBar.setVisibility(View.INVISIBLE);
+        if(url == "Wrong Login") {
+            Toast.makeText(this, url, Toast.LENGTH_SHORT).show();
+            return;
+        }
         Toast.makeText(this,"Posting complete",Toast.LENGTH_SHORT).show();
         TextView urlText = (TextView) findViewById(R.id.urlText);
         urlText.setClickable(true);
@@ -357,6 +401,7 @@ public class genActivity extends ActionBarActivity implements AsyncResponse {
                 e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
+                return "Wrong Login";
             }
             return null;
         }

@@ -14,5 +14,6 @@
     <string name="wryy">WRYYYYY!!!!!</string>
     <string name="songhint">Artist/Album</string>
     <string name="cancel">Cancel</string>
+    <string name="login_checkbox">Save Login?</string>
 
 </resources>
